@@ -2,7 +2,7 @@
 
 # Doubly Robust Estimation under Covariate-induced Dependent Left Truncation
 
-This repository contains code that implement the estimators proposed in the paper 'Doubly Robust Estimation under Covariate-induced Dependent Left Truncation' by Yuyao Wang, Andrew Ying, and Ronghui Xu. 
+This repository contains code that implements the estimators proposed in the paper 'Doubly Robust Estimation under Covariate-induced Dependent Left Truncation' by Yuyao Wang, Andrew Ying, and Ronghui Xu. 
 
 The 'src' folder contains the functions that implement the estimators, and the R scripts under the root directory of this repository contains the main code for the simlation and data analysis involved in the paper with details listed below. 
 
