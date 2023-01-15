@@ -42,7 +42,7 @@ In addition, the 'arXiv_20220814' folder includes the code for the simulation in
  
  - 'c1.main_CNS.R': The main code for analyzing the CNS lymphoma data.
  
- - Folder 'CNS_data': the CNS lymphoma data ("CNS_data.txt") from a study of methotrexate-based chemotherapy (Wang et al., 2015) and the code for analyzing this data set from Vakulenko-Lagun et. al. (2021), obtained from the Supplementary material of Vakulenko-Lagun et. al. (2021).
+ - Folder 'CNS_data' contains the CNS lymphoma data ("CNS_data.txt") from a study of methotrexate-based chemotherapy (Wang et al., 2015) and the code for analyzing this data set from Vakulenko-Lagun et. al. (2021), which are from the Supplementary material of Vakulenko-Lagun et. al. (2021).
  
  - 'c2.main_HAAS': The main code for analyzing the HAAS data. 
 
