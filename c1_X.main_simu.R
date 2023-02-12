@@ -12,13 +12,13 @@ library(parallel)   # package for parallel computing
 library(LTRCforests)
 library(cvTools)  # used for creating folds for cross-fitting
 library(xtable)  # printing the table format for LaTeX
-source("c1.gen_Xcox.R")
-source("c1.estimator.R")
-source("c1.functions.cox.R")
-source("c1.functions.ltrcrrf.R")
-source("c1.simu_estimate.cox_naive_full.R")
-source("c1.simu_estimate.ltrcrrf.R")
-source("c.simu_estimate_pl.R")
+source("src/c1.gen_Xcox.R")
+source("src/c1.estimator.R")
+source("src/c1.functions.cox.R")
+source("src/c1.functions.ltrcrrf.R")
+source("src/c1.simu_estimate.cox_naive_full.R")
+source("src/c1.simu_estimate.ltrcrrf.R")
+source("src/c.simu_estimate_pl.R")
 
 dir.create("c1_X.results")
 dir.create("c1_X.datasets")
@@ -398,7 +398,7 @@ print(paste("covariates.Q:", paste(covariates.Q, collapse = ", ")))
 
 
 # PL ------------------------------------------------------------------------------
-source("c.simu_estimate_pl.R")
+source("src/c.simu_estimate_pl.R")
 
 itern = 500
 n.boot = 100
