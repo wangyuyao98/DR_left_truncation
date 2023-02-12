@@ -1,0 +1,17 @@
+universe = vanilla
+log = log/R.log.$(Cluster).$(Process).$(index)
+error = log/R.err.$(Cluster).$(Process).$(index)
+output = log/R.out.$(Cluster).$(Process).$(index)
+
++SingularityImage = "/cvmfs/singularity.opensciencegrid.org/opensciencegrid/osgvo-r:4.0.2"
+executable = R-wrapper.sh
+arguments = $(index)
+transfer_input_files = R-packages.tar.gz, main_boot.ltrcrrf.R, c1.gen_Xcox.R, c1.estimator.R, c1.functions.ltrcrrf.R, input_b1/data$(index)/seeds_input.rda
+transfer_output_files = result.rda
+transfer_output_remaps = "result.rda = result.$(index)_b1.rda"
+
+request_cpus = 1
+request_memory = 0.5GB
+request_disk = 0.5GB
+
+queue index from indices_1-500.txt

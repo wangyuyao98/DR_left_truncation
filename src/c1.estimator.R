@@ -374,6 +374,8 @@ c1.est_cf.ltrcrrf <- function(dat, nu, covariates.X, covariates.Q, K,
   for(k in 1:K){
     dat.est = dat[folds$subsets[folds$which == k], ]
     dat.fit = dat[folds$subsets[folds$which != k], ]  
+    dat.fit = dat.fit[dat.fit$X - dat.fit$Q > 1e-7, ]  # remove the observation that result in "an interval has effective length 0"
+    
     nk = nrow(dat.est)
     
     newdat = dat.est
@@ -549,6 +551,8 @@ c1.estSurv_cf.ltrcrrf <- function(t0, dat, covariates.X, covariates.Q, K,
   for(k in 1:K){
     dat.est = dat[folds$subsets[folds$which == k], ]
     dat.fit = dat[folds$subsets[folds$which != k], ]  
+    dat.fit = dat.fit[dat.fit$X - dat.fit$Q > 1e-7, ]  # remove the observation that result in "an interval has effective length 0"
+    
     nk = nrow(dat.est)
     
     newdat = dat.est

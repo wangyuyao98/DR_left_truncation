@@ -30,11 +30,11 @@ In addition, the 'arXiv_20220814' folder includes the code for the simulation in
 
  - 'generate_seeds.R': Generate random seeds for simulating data sets and save the seeds.
 
- - 'c1.main_simu': The main code for simulation under the censoring scenario ('c1') that censoring can happen before left truncation. The estimators computed are the dr, IPW.Q, Reg.T1, and Reg.T2 estimators with coxph() for estimating the nuisance parameters, the cf-RF-RF estimator, as well as the naive and full estimators. 
+ - 'c1_X.main_simu': The main code for simulation under the 'censoring scenario ('c1') that censoring can happen before left truncation'censoring before truncation' scenario. The estimators computed are the dr, IPW.Q, Reg.T1, and Reg.T2 estimators with coxph() for estimating the nuisance parameters, the cf-RF-RF estimator, as well as the naive and full estimators. 
  
- - 'c2.main_simu': The main code for simulation under the censoring scenario ('c2') that censoring is always after left truncation. The estimators computed are the dr, IPW.Q, Reg.T1, and Reg.T2 estimators with coxph() for estimating the nuisance parameters, as well as the naive and full estimators. 
+ - 'c2.main_simu': The main code for simulation under the 'censoring scenario ('c2') that censoring is always after left truncation'censoring after truncation' scenario. The estimators computed are the dr, IPW.Q, Reg.T1, and Reg.T2 estimators with coxph() for estimating the nuisance parameters, as well as the naive and full estimators. 
  
- 
+ - The folder 'c1.OSG' contains the code for computing the bootstrap SE for the 'cf-RF-RF' estimator using parallel computing on OSG. 
  
  
  
