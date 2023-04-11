@@ -16,11 +16,11 @@ In addition, the folder 'Scenarios1-7' contains code for additional simulations 
  
  - 'simu_save.R': The code that simulates and saves the data sets.
 
- - 'main.cox_naive_full.R': The main code that load the simulated data sets and computes the 'dr', 'IPW.Q', 'Reg.T1', 'Reg.T2' estimators with Cox models to estimate the two nuisance parameters, the naive estimator that ignores left truncation, and the oracle full data estimator.
+ - 'main.cox_naive_full.R': The main code that loads the simulated data sets and computes the 'dr', 'IPW.Q', 'Reg.T1', 'Reg.T2' estimators with Cox models to estimate the two nuisance parameters, the naive estimator that ignores left truncation, and the oracle full data estimator.
  
- - 'main.ltrcrrf.R': The main code that load the simulated data sets and computes the 'cf' estimator where the nuisance parameters $F$ and $G$ are estimated by the relative risk forest (Yao et. al. 2020). In particular, $F$ and $G$ are estimated using the `ltrcrrf()` function of the 'LTRCforests' R package.
+ - 'main.ltrcrrf.R': The main code that loads the simulated data sets and computes the 'cf' estimator where the nuisance parameters $F$ and $G$ are estimated by the relative risk forest (Yao et. al. 2020). In particular, $F$ and $G$ are estimated using the `ltrcrrf()` function of the 'LTRCforests' R package.
  
- - 'main_pl.R': The main code that load the simulated data sets and computes the product-limit (PL) estimator.
+ - 'main_pl.R': The main code that loads the simulated data sets and computes the product-limit (PL) estimator.
  
  - 'main_visulize_simu_result.R': The main code that visualizes the simulation results.
  
