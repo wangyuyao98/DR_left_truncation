@@ -27,14 +27,10 @@ c2.est_DR.cox <- function(dat, nu, covariates.T, covariates.Q, trim.C = 1e-7){
   }
   # IPCW weights
   wd = rep(0, n)
-  id1 = which(delta == 1)
-  wd[id1] = 1/pmax(Sd(X-Q)[id1], trim.C)
+  id1 = which(dat$delta == 1)
+  wd[id1] = 1/pmax(Sd(dat$X-dat$Q)[id1], trim.C)
   dat$wd = wd
   
-  formula.T = formula(paste("Surv(Q, X, delta.1) ~ ", 
-                            paste(covariates.T, collapse = "+"), collapse = ""))
-  formula.Q2 = formula(paste("Surv(tau-X, tau-Q, delta.1) ~ ", 
-                             paste(covariates.Q, collapse = "+"), collapse = ""))
   Z.T = as.matrix(dat[,covariates.T])
   Z.Q = as.matrix(dat[,covariates.Q])
   
@@ -42,11 +38,23 @@ c2.est_DR.cox <- function(dat, nu, covariates.T, covariates.Q, trim.C = 1e-7){
   # IPCW weighted uncensored subjects, i.e., those with delta = 1
   id.cox = (dat$delta == 1) & ((dat$X - dat$Q) >= 10^{-7}) 
   dat.cox = dat[id.cox, ]
+  
+  id.cox.all = ((dat$X - dat$Q) >= 10^{-7}) 
+  dat.cox.all = dat[id.cox.all, ]
  
   # fit Cox-PH model for T|Z
-  fit.T = coxph(formula.T, data = dat.cox, weights = dat.cox$wd)
+  # formula.T = formula(paste("Surv(Q, X, delta.1) ~ ",
+  #                           paste(covariates.T, collapse = "+"), collapse = ""))
+  # fit.T = coxph(formula.T, data = dat.cox, weights = dat.cox$wd)
+  formula.T = formula(paste("Surv(Q, X, delta) ~ ",
+                            paste(covariates.T, collapse = "+"), collapse = ""))
+  fit.T = coxph(formula.T, data = dat.cox.all) 
+  
   # fit Cox-PH model for (tau-Q)|Z
+  formula.Q2 = formula(paste("Surv(tau-X, tau-Q, delta.1) ~ ", 
+                             paste(covariates.Q, collapse = "+"), collapse = ""))
   fit.Q2 = coxph(formula.Q2, data = dat.cox, weights = dat.cox$wd)
+  
   basehaz.T = basehaz(fit.T, centered = FALSE)
   basehaz.Q2 = basehaz(fit.Q2, centered = FALSE)
   beta.T = coef(fit.T)
@@ -165,10 +173,10 @@ c2.estSurv_DR.cox <- function(t0, dat, covariates.T, covariates.Q, trim.C){
   wd[id1] = 1/Sd(dat$X-dat$Q)[id1]
   dat$wd = wd
   
-  formula.T = formula(paste("Surv(Q, X, delta.1) ~ ", 
-                            paste(covariates.T, collapse = "+"), collapse = ""))
-  formula.Q2 = formula(paste("Surv(tau-X, tau-Q, delta.1) ~ ", 
-                             paste(covariates.Q, collapse = "+"), collapse = ""))
+  # formula.T = formula(paste("Surv(Q, X, delta.1) ~ ", 
+  #                           paste(covariates.T, collapse = "+"), collapse = ""))
+  # formula.Q2 = formula(paste("Surv(tau-X, tau-Q, delta.1) ~ ", 
+  #                            paste(covariates.Q, collapse = "+"), collapse = ""))
   Z.T = as.matrix(dat[,covariates.T])
   Z.Q = as.matrix(dat[,covariates.Q])
   
@@ -177,10 +185,23 @@ c2.estSurv_DR.cox <- function(t0, dat, covariates.T, covariates.Q, trim.C){
   id.cox = (dat$delta == 1) & ((dat$X - dat$Q) >= 10^{-7}) 
   dat.cox = dat[id.cox, ]
   
+  id.cox.all = ((dat$X - dat$Q) >= 10^{-7}) 
+  dat.cox.all = dat[id.cox.all, ]
+  
   # fit Cox-PH model for T|Z
-  fit.T = coxph(formula.T, data = dat.cox, weights = dat.cox$wd)
+  # formula.T = formula(paste("Surv(Q, X, delta.1) ~ ",
+  #                           paste(covariates.T, collapse = "+"), collapse = ""))
+  # fit.T = coxph(formula.T, data = dat.cox, weights = dat.cox$wd)
+  formula.T = formula(paste("Surv(Q, X, delta) ~ ",
+                            paste(covariates.T, collapse = "+"), collapse = ""))
+  fit.T = coxph(formula.T, data = dat.cox.all) 
+  
   # fit Cox-PH model for (tau-Q)|Z
+  formula.Q2 = formula(paste("Surv(tau-X, tau-Q, delta.1) ~ ", 
+                             paste(covariates.Q, collapse = "+"), collapse = ""))
   fit.Q2 = coxph(formula.Q2, data = dat.cox, weights = dat.cox$wd)
+  
+  
   basehaz.T = basehaz(fit.T, centered = FALSE)
   basehaz.Q2 = basehaz(fit.Q2, centered = FALSE)
   beta.T = coef(fit.T)

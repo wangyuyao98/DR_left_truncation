@@ -78,22 +78,26 @@ fit.Q2
 ### compute the estimators ------------------------------------------------------------=
 alpha = 0.05
 qz = qnorm(alpha/2, lower = FALSE)
-trim.C = 0.05    # bound the Sc(t) from below 
+trim.C = 1e-7    # bound the Sc(t) from below 
 n.boot = 100
 
-t0.list = seq(min(dat$X)-1, max(dat$X)+1, by = 1)
+t0.list = seq(min(dat$X[dat$delta==1])-1, max(dat$X)+1, by = 1)
 
-## PL estimator 
+# PL estimator --------------------------------------------------------------------
 plfit.T = survfit(Surv(Q, X, delta)~1, data = dat)
+plsf.T = stepfun(plfit.T$time, c(1, plfit.T$surv))
+est.pl = plsf.T(t0.list)
 
-## KM estimator from the original data set 
-kmfit.T = survfit(Surv(X, delta)~1, data = dat0)
+# KM estimator that ignores left truncation  -----------------------------------------
+kmfit.T = survfit(Surv(X, delta)~1, data = dat)
+kmsf.T = stepfun(kmfit.T$time, c(1, kmfit.T$surv))
+est.km = kmsf.T(t0.list)
 
-## naive estimator
+# naive estimator -----------------------------------------------------------------
 est_naive = sapply(t0.list, c1.estSurv_naive, dat = dat)
 names(est_naive) = t0.list
 
-## dr-Cox-Cox, IPW.Q-Cox, Reg.T1-Cox, Reg.T2-Cox 
+# dr-Cox-Cox, IPW.Q-Cox, Reg.T1-Cox, Reg.T2-Cox -------------------------------------
 set.seed(123)
 start_time <- Sys.time()
 system.time({
@@ -105,7 +109,7 @@ save(result, t0.list, covariates.X, covariates.Q, trim.C, n.boot,
      file = paste("CNS_data/c1.results/CNS_n",nrow(dat),".cox_trimC", trim.C, ".rda", sep = ""))
 
 
-## cf-RF-RF
+## cf-RF-RF ------------------------------------------------------------------------
 # parameters used for ltrcrrf
 K = 10  # number of folds for cross fitting
 mtry = 2
@@ -258,8 +262,8 @@ fCI_u.CW = stepfun(CW.est$time, c(1, CW.est$CI.U))
 
 
 ### plots -----------------------------------------------------------------------------------
-names <- c("cf-RF-RF", "dr-Cox-Cox", "IPW.Q-Cox", "Reg.T1-Cox", "Reg.T2-Cox", "KM")
-xlim =  c(min(dat$X)-1,max(dat$X)+1)
+names <- c("cf-RF-RF", "dr-Cox-Cox", "IPW.Q-Cox", "Reg.T1-Cox", "Reg.T2-Cox", "naive")  # naive = naive KM
+xlim =  c(0,max(dat$X)+1)
 ylim = c(-0.5,2.5)
 color.pl = 8  #"grey"
 lty.pl = 6
@@ -267,7 +271,7 @@ lwd.pl = 2
 color = c(2,1,"purple",4,3,"brown")
 lty = c(1,1,4,5,2,3)
 lwd = c(2, 2, 2, 2, 2, 3)
-color.cw = 5
+color.cw = "orange" # 5, 
 lty.cw = 4
 lwd.cw = 2
 cex = 2
@@ -277,86 +281,12 @@ cex = 2
 ylim = c(0,1)
 pdf(paste("./CNS_data/c1.plots/c1CNS_surv_pbootCIb01_n",nrow(dat),"_cf_ntree_", ntree, ".pdf", sep = ""), 
     width = 5.5, height = 5.5)
-plot(plfit.T, conf.int = FALSE, col = color.pl,
+# plot(plfit.T, conf.int = FALSE, col = color.pl,
+#      lty = lty.pl, xlim = xlim, ylim = ylim, lwd = lwd.pl,
+#      xlab = "Time (months)", ylab = "Survival probability")
+plot(t0.list, est.pl, type = "l", col = color.pl,
      lty = lty.pl, xlim = xlim, ylim = ylim, lwd = lwd.pl,
-     xlab = "Time (months)", ylab = "Survival probability",
-     main = "(b)", font.main = 1)
-for(j in 5:1){
-  # shade the confidence intervals
-  polygon(x = c(t0.list, rev(t0.list)),
-          y = pmax(pmin(c(pbootCI.l[,j], rev(pbootCI.u[,j])),1),0),
-          col =  adjustcolor(color[j], alpha.f = 0.2), border = NA)
-}
-# CW CI's
-polygon(x = c(t0.list, rev(t0.list)),
-        y = pmax(pmin(c(fCI_l.CW(t0.list), rev(fCI_u.CW(t0.list))),1),0),
-        col =  adjustcolor(color.cw, alpha.f = 0.2), border = NA)
-j=ncol(est)
-lines(kmfit.T, conf.int = FALSE, col = color[j], lty = lty[j], lwd = lwd[j])
-lines(t0.list, f.CW(t0.list), col = color.cw, lty = lty.cw, lwd = lwd.cw)
-for(j in 1:(ncol(est)-1)){
-  lines(t0.list, est[,j], col = color[j], lty = lty[j], lwd = lwd[j])
-}
-legend("topright", legend = c(names[1:(ncol(est)-1)],"CW", "PL", names[ncol(est)]), 
-       lty = c(lty[1:(ncol(est)-1)], lty.cw, lty.pl, lty[ncol(est)]), 
-       col = c(color[1:(ncol(est)-1)], color.cw, color.pl, color[ncol(est)]), 
-       lwd = c(lwd[1:(ncol(est)-1)], lwd.cw, lwd.pl, lwd[ncol(est)]),
-       bty = "n", cex = 0.9)
-dev.off()
-
-
-## plot without the CI's
-pdf(paste("./CNS_data/c1.plots/c1CNS_surv_n",nrow(dat),"_cf_ntree_", ntree, ".pdf", sep = ""), 
-    width = 5, height = 5)
-plot(plfit.T, conf.int = FALSE, col = color.pl,
-     lty = lty.pl, xlim = xlim, ylim = ylim, lwd = lwd.pl,
-     xlab = "Time (months)", ylab = "Survival probability",
-     main = "(a)", font.main = 1)
-j=ncol(est)
-lines(kmfit.T, conf.int = FALSE, col = color[j], lty = lty[j], lwd = lwd[j])
-lines(t0.list, f.CW(t0.list), col = color.cw, lty = lty.cw, lwd = lwd.cw)
-for(j in 1:(ncol(est)-1)){
-  lines(t0.list, est[,j], col = color[j], lty = lty[j], lwd = lwd[j])
-}
-legend("topright", legend = c(names[1:(ncol(est)-1)],"CW", "PL", names[ncol(est)]), 
-       lty = c(lty[1:(ncol(est)-1)], lty.cw, lty.pl, lty[ncol(est)]), 
-       col = c(color[1:(ncol(est)-1)], color.cw, color.pl, color[ncol(est)]), 
-       lwd = c(lwd[1:(ncol(est)-1)], lwd.cw, lwd.pl, lwd[ncol(est)]),
-       bty = "n", cex = 0.9)
-dev.off()
-
-
-## one figure with both plots
-ylim = c(0,1)
-cex.legend = 0.95
-font.main = 1.5
-cex.lab = 1.3
-cex.axis = 1.3
-pdf(paste("./CNS_data/c1.plots/c1CNS_survCI_n",nrow(dat),"_cf_ntree_", ntree, ".pdf", sep = ""), 
-    width = 10, height = 4.5)
-par(mfrow = c(1,2), mar = c(4,5,2.5,1))
-# plot without the CI's
-plot(plfit.T, conf.int = FALSE, col = color.pl,
-     lty = lty.pl, xlim = xlim, ylim = ylim, lwd = lwd.pl,
-     xlab = "Time (months)", ylab = "Survival probability",
-     main = "(a)", font.main = font.main, cex.lab = cex.lab, cex.axis = cex.axis)
-j=ncol(est)
-lines(kmfit.T, conf.int = FALSE, col = color[j], lty = lty[j], lwd = lwd[j])
-lines(t0.list, f.CW(t0.list), col = color.cw, lty = lty.cw, lwd = lwd.cw)
-for(j in 1:(ncol(est)-1)){
-  lines(t0.list, est[,j], col = color[j], lty = lty[j], lwd = lwd[j])
-}
-legend("topright", legend = c(names[1:(ncol(est)-1)],"CW", "PL", names[ncol(est)]), 
-       lty = c(lty[1:(ncol(est)-1)], lty.cw, lty.pl, lty[ncol(est)]), 
-       col = c(color[1:(ncol(est)-1)], color.cw, color.pl, color[ncol(est)]), 
-       lwd = c(lwd[1:(ncol(est)-1)], lwd.cw, lwd.pl, lwd[ncol(est)]),
-       bty = "n", cex = cex.legend)
-
-# plot with the CI's
-plot(plfit.T, conf.int = FALSE, col = color.pl,
-     lty = lty.pl, xlim = xlim, ylim = ylim, lwd = lwd.pl,
-     xlab = "Time (months)", ylab = "Survival probability",
-     main = "(b)", font.main = font.main, cex.lab = cex.lab, cex.axis = cex.axis)
+     xlab = "Time (months)", ylab = "Survival probability")
 for(j in 5:1){
   # shade the confidence intervals
   polygon(x = c(t0.list, rev(t0.list)),
@@ -368,7 +298,9 @@ polygon(x = c(t0.list, rev(t0.list)),
         y = pmax(pmin(c(fCI_l.CW(t0.list), rev(fCI_u.CW(t0.list))),1),0),
         col =  adjustcolor(color.cw, alpha.f = 0.2), border = NA)
 j=ncol(est)
-lines(kmfit.T, conf.int = FALSE, col = color[j], lty = lty[j], lwd = lwd[j])
+# lines(kmfit.T, conf.int = FALSE, xlim = xlim,
+#       col = color[j], lty = lty[j], lwd = lwd[j])
+lines(t0.list, est.km, xlim = xlim, col = color[j], lty = lty[j], lwd = lwd[j])
 lines(t0.list, f.CW(t0.list), col = color.cw, lty = lty.cw, lwd = lwd.cw)
 for(j in 1:(ncol(est)-1)){
   lines(t0.list, est[,j], col = color[j], lty = lty[j], lwd = lwd[j])
@@ -377,136 +309,35 @@ legend("topright", legend = c(names[1:(ncol(est)-1)],"CW", "PL", names[ncol(est)
        lty = c(lty[1:(ncol(est)-1)], lty.cw, lty.pl, lty[ncol(est)]), 
        col = c(color[1:(ncol(est)-1)], color.cw, color.pl, color[ncol(est)]), 
        lwd = c(lwd[1:(ncol(est)-1)], lwd.cw, lwd.pl, lwd[ncol(est)]),
-       bty = "n", cex = cex.legend)
+       bty = "n", cex = 0.9)
 dev.off()
 
 
 
-
-## one figure with both plots - no CW
-ylim = c(0,1)
-cex.legend = 0.95
-font.main = 1.5
-cex.lab = 1.3
-cex.axis = 1.3
-pdf(paste("./CNS_data/c1.plots/c1CNS_survCI_noCW_n",nrow(dat),"_cf_ntree_", ntree, ".pdf", sep = ""), 
-    width = 10, height = 4.5)
-par(mfrow = c(1,2), mar = c(4,5,2.5,1))
-# plot without the CI's
-plot(plfit.T, conf.int = FALSE, col = color.pl,
+## plot without the CI's
+pdf(paste("./CNS_data/c1.plots/c1CNS_surv_n",nrow(dat),"_cf_ntree_", ntree, ".pdf", sep = ""), 
+    width = 5, height = 5)
+plot(t0.list, est.pl, type = "l", col = color.pl,
      lty = lty.pl, xlim = xlim, ylim = ylim, lwd = lwd.pl,
-     xlab = "Time (months)", ylab = "Survival probability",
-     main = "(a)", font.main = font.main, cex.lab = cex.lab, cex.axis = cex.axis)
+     xlab = "Time (months)", ylab = "Survival probability")
 j=ncol(est)
-lines(kmfit.T, conf.int = FALSE, col = color[j], lty = lty[j], lwd = lwd[j])
-# lines(t0.list, f.CW(t0.list), col = color.cw, lty = lty.cw, lwd = lwd.cw)
+lines(t0.list, est.km, xlim = xlim, col = color[j], lty = lty[j], lwd = lwd[j])
+lines(t0.list, f.CW(t0.list), col = color.cw, lty = lty.cw, lwd = lwd.cw)
 for(j in 1:(ncol(est)-1)){
   lines(t0.list, est[,j], col = color[j], lty = lty[j], lwd = lwd[j])
 }
-legend("topright", legend = c(names[1:(ncol(est)-1)], "PL", names[ncol(est)]), 
-       lty = c(lty[1:(ncol(est)-1)], lty.pl, lty[ncol(est)]), 
-       col = c(color[1:(ncol(est)-1)], color.pl, color[ncol(est)]), 
-       lwd = c(lwd[1:(ncol(est)-1)], lwd.pl, lwd[ncol(est)]),
-       bty = "n", cex = cex.legend)
-
-# plot with the CI's
-plot(plfit.T, conf.int = FALSE, col = color.pl,
-     lty = lty.pl, xlim = xlim, ylim = ylim, lwd = lwd.pl,
-     xlab = "Time (months)", ylab = "Survival probability",
-     main = "(b)", font.main = font.main, cex.lab = cex.lab, cex.axis = cex.axis)
-for(j in 5:1){
-  # shade the confidence intervals
-  polygon(x = c(t0.list, rev(t0.list)),
-          y = pmax(pmin(c(pbootCI.l[,j], rev(pbootCI.u[,j])),1),0),
-          col =  adjustcolor(color[j], alpha.f = 0.2), border = NA)
-}
-# #CW CI's
-# polygon(x = c(t0.list, rev(t0.list)),
-#         y = pmax(pmin(c(fCI_l.CW(t0.list), rev(fCI_u.CW(t0.list))),1),0),
-#         col =  adjustcolor(color.cw, alpha.f = 0.2), border = NA)
-j=ncol(est)
-lines(kmfit.T, conf.int = FALSE, col = color[j], lty = lty[j], lwd = lwd[j])
-#lines(t0.list, f.CW(t0.list), col = color.cw, lty = lty.cw, lwd = lwd.cw)
-for(j in 1:(ncol(est)-1)){
-  lines(t0.list, est[,j], col = color[j], lty = lty[j], lwd = lwd[j])
-}
-legend("topright", legend = c(names[1:(ncol(est)-1)], "PL", names[ncol(est)]), 
-       lty = c(lty[1:(ncol(est)-1)], lty.pl, lty[ncol(est)]), 
-       col = c(color[1:(ncol(est)-1)], color.pl, color[ncol(est)]), 
-       lwd = c(lwd[1:(ncol(est)-1)], lwd.pl, lwd[ncol(est)]),
-       bty = "n", cex = cex.legend)
+legend("topright", legend = c(names[1:(ncol(est)-1)],"CW", "PL", names[ncol(est)]), 
+       lty = c(lty[1:(ncol(est)-1)], lty.cw, lty.pl, lty[ncol(est)]), 
+       col = c(color[1:(ncol(est)-1)], color.cw, color.pl, color[ncol(est)]), 
+       lwd = c(lwd[1:(ncol(est)-1)], lwd.cw, lwd.pl, lwd[ncol(est)]),
+       bty = "n", cex = 0.9)
 dev.off()
 
 
 
 
-## using ggplot2 for the plots
-library(ggplot2)
-library(ggalt) # for stepribbon in ggplot
-pbootCI.u = pmin(pbootCI.u, 1)   # bound the CI's to be between 0 and 1
-res <- rbind( data.frame(time=t0.list, 
-                         surv=est[,1], 
-                         L.95=pbootCI.l[,1],
-                         U.95=pbootCI.u[,1],
-                         method=1),
-              data.frame(time=t0.list, 
-                         surv=est[,2], 
-                         L.95=pbootCI.l[,2],
-                         U.95=pbootCI.u[,2],
-                         method=2),
-              data.frame(time=t0.list, 
-                         surv=est[,3], 
-                         L.95=pbootCI.l[,3],
-                         U.95=pbootCI.u[,3],
-                         method=3),
-              data.frame(time=t0.list, 
-                         surv=est[,4], 
-                         L.95=pbootCI.l[,4],
-                         U.95=pbootCI.u[,4],
-                         method=4),
-              data.frame(time=t0.list, 
-                         surv=est[,5], 
-                         L.95=pbootCI.l[,5],
-                         U.95=pbootCI.u[,5],
-                         method=5),
-              data.frame(time=plfit.T$time, 
-                         surv=plfit.T$surv, 
-                         L.95=NA, 
-                         U.95=NA,
-                         method=7),
-              data.frame(time=t0.list, 
-                         surv=est[,6], 
-                         L.95=pbootCI.l[,6],
-                         U.95=pbootCI.u[,6],
-                         method=8)
-)
-lev <- c("cf-RF-RF", "dr-Cox-Cox", "IPW.Q-Cox", "Reg.T1-Cox", "Reg.T2-Cox", "PL", "KM")
-res$Method <- factor(res$method, ordered=TRUE)
-levels(res$Method) <- lev
 
-p <- ggplot(res, aes(x=time, y=surv, 
-                     color=Method, 
-                     fill=Method,
-                     linetype=Method)) +
-  geom_step(size=1.2) +
-  geom_ribbon(aes(ymin=L.95, ymax=U.95), alpha=0.2, stat="stepribbon") +
-  scale_color_brewer(palette = "Dark2") + scale_fill_brewer(palette = "Dark2")
-p <- p + 
-  xlab("Time (months)")+
-  ylab("Survival probability") +
-  theme(axis.text.x = element_text(face="bold", angle=0),
-        axis.text.y = element_text(face="bold"))+
-  theme(legend.position = c(0.79, 0.75),
-        panel.background=element_rect(fill="transparent"),
-        plot.background=element_rect(fill="transparent"),
-        legend.background=element_rect(fill="transparent"),
-        legend.box.background = element_rect(fill="transparent", color=NA),
-        legend.key = element_rect(fill="transparent"))  
-p
-pdf(paste("./CNS_data/c1.plots/c1CNS_ggplot2_surv_pbootCIb01_n",nrow(dat),"_cf_ntree_", ntree, ".pdf", sep = ""), 
-    width = 5.5, height = 5.5)
-p
-dev.off()
+
 
 
 
@@ -572,7 +403,7 @@ est_pl = surv.pl(t0.list)
 est_km = surv.km(t0.list)
 
 bootresult_pl = boot(dat, estSurv_pl.boot, R = nb.total, t0 = t0.list)
-bootresult_km = boot(dat0, estSurv_KM.boot, R = nb.total, t0 = t0.list)
+bootresult_km = boot(dat, estSurv_KM.boot, R = nb.total, t0 = t0.list)
 
 pbootCI_pl = apply(bootresult_pl$t, 2, quantile, probs = c(alpha/2, 1-alpha/2))
 pbootCI_km = apply(bootresult_km$t, 2, quantile, probs = c(alpha/2, 1-alpha/2))
